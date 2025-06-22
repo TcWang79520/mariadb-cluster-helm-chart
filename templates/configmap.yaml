@@ -1,0 +1,25 @@
+# configmap-primary.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "my-mariadb.fullname" . }}-primary-config"
+data:
+  my.cnf: |
+    [mysqld]
+    server_id = {{ .Values.primary.serverId }}
+    log_bin = mysql-bin
+  init.sql: |
+{{ .Values.initSql | indent 4 }}
+
+---
+
+# configmap-replica.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "my-mariadb.fullname" . }}-replica-config"
+data:
+  my.cnf: |
+    [mysqld]
+    server_id = {{ .Values.replica.serverId }}
+    log_bin = mysql-bin

@@ -1,0 +1,4 @@
+result.yaml
+*.log
+.DS_Store
+*.swp

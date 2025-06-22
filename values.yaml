@@ -1,0 +1,30 @@
+image:
+  repository: mariadb
+  tag: "10.11"
+
+auth:
+  rootPassword: myrootpass
+  replicationUser: repl
+  replicationPassword: replpass
+
+primary:
+  serverId: 1
+  persistence:
+    size: 2Gi
+    storageClass: "standard"  # 空的代表用預設 StorageClass
+
+replica:
+  serverId: 2
+  replicaCount: 1
+  persistence:
+    size: 2Gi
+    storageClass: "standard"
+
+initSql: |
+  CREATE DATABASE IF NOT EXISTS testdb;
+  USE testdb;
+  CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE
+  );

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "{{ include "my-mariadb.fullname" . }}-primary"
+spec:
+  serviceName: "{{ include "my-mariadb.fullname" . }}-primary"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ include "my-mariadb.fullname" . }}-primary"
+  template:
+    metadata:
+      labels:
+        app: "{{ include "my-mariadb.fullname" . }}-primary"
+    spec:
+      containers:
+        - name: mariadb
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              value: "{{ .Values.auth.rootPassword }}"
+            - name: MARIADB_REPLICATION_USER
+              value: "{{ .Values.auth.replicationUser }}"
+            - name: MARIADB_REPLICATION_PASSWORD
+              value: "{{ .Values.auth.replicationPassword }}"
+            - name: MARIADB_SERVER_ID
+              value: {{ .Values.primary.serverId | quote }}
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+            - name: config
+              mountPath: /etc/mysql/conf.d/my.cnf
+              subPath: my.cnf
+      volumes:
+        - name: init-sql
+          configMap:
+            name: "{{ include "my-mariadb.fullname" . }}-primary-config"
+        - name: config
+          configMap:
+            name: "{{ include "my-mariadb.fullname" . }}-primary-config"
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "{{ .Values.primary.persistence.size }}"
+        storageClassName: "{{ .Values.primary.persistence.storageClass }}"

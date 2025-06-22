@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "{{ include "my-mariadb.fullname" . }}-replica"
+spec:
+  serviceName: "{{ include "my-mariadb.fullname" . }}-replica"
+  replicas: {{ .Values.replica.replicaCount }}
+  selector:
+    matchLabels:
+      app: "{{ include "my-mariadb.fullname" . }}-replica"
+  template:
+    metadata:
+      labels:
+        app: "{{ include "my-mariadb.fullname" . }}-replica"
+    spec:
+      containers:
+        - name: mariadb
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              value: "{{ .Values.auth.rootPassword }}"
+            - name: MARIADB_MASTER_HOST
+              value: "{{ include "my-mariadb.fullname" . }}-primary-0.{{ include "my-mariadb.fullname" . }}-primary.default.svc.cluster.local"
+            - name: MARIADB_REPLICATION_USER
+              value: "{{ .Values.auth.replicationUser }}"
+            - name: MARIADB_REPLICATION_PASSWORD
+              value: "{{ .Values.auth.replicationPassword }}"
+            - name: MARIADB_SERVER_ID
+              value: {{ .Values.replica.serverId | quote }}
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: config
+              mountPath: /etc/mysql/conf.d/my.cnf
+              subPath: my.cnf
+      volumes:
+        - name: config
+          configMap:
+            name: "{{ include "my-mariadb.fullname" . }}-replica-config"
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "{{ .Values.replica.persistence.size }}"
+        storageClassName: "{{ .Values.replica.persistence.storageClass }}"

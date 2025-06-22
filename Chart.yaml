@@ -1,0 +1,6 @@
+apiVersion: v2
+name: my-mariadb
+description: A custom MariaDB 1+N Helm chart
+version: 0.1.0
+appVersion: "10.11"
+type: application
